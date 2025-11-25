@@ -3,100 +3,212 @@ import sublime_plugin
 import subprocess
 import os
 import threading
-import json
+import re
+import traceback
 from datetime import datetime
 
+# Global constant for the home config file
+AIDER_CONF_PATH = os.path.expanduser("~/.aider.conf.yml")
+
+def plugin_loaded():
+    """Called when the plugin is loaded."""
+    print("AiderSavvy: Plugin loaded successfully.")
 
 class AiderSavvyCommand(sublime_plugin.WindowCommand):
-    """Commande principale pour ouvrir le dashboard Aider"""
+    """Main command to open the Aider dashboard."""
 
     def run(self):
-        view = self.window.new_file()
-        view.set_name("AIDER")
-        view.settings().set("aider_savvy_dashboard", True)
-        view.settings().set("aider_savvy_view", "status")
-        view.set_scratch(True)
-        view.set_read_only(True)
-        view.settings().set("word_wrap", False)
-        view.assign_syntax("Packages/AiderSavvy/AiderSavvy.sublime-syntax")
+        print("AiderSavvy: Run triggered")
+        try:
+            # Create or reuse the view
+            view = self.get_existing_dashboard()
+            if not view or not view.is_valid():
+                view = self.window.new_file()
+                view.set_name("AIDER")
+                view.settings().set("aider_savvy_dashboard", True)
+                view.settings().set("aider_savvy_view", "status")
+                view.set_scratch(True)
+                view.set_read_only(True)
+                view.settings().set("word_wrap", False)
 
-        # Initialiser le contexte Aider
-        if not hasattr(self.window, 'aider_context'):
+                try:
+                    view.assign_syntax("Packages/AiderSavvy/AiderSavvy.sublime-syntax")
+                except Exception:
+                    pass
+
+            # Initialize Aider context if needed
+            if not hasattr(self.window, 'aider_context'):
+                self.init_context()
+
+            # Bring view to front and refresh
+            self.window.focus_view(view)
+            self.refresh_dashboard(view)
+
+        except Exception:
+            traceback.print_exc()
+
+    def get_existing_dashboard(self):
+        """Check if dashboard already exists."""
+        for view in self.window.views():
+            if view.settings().get("aider_savvy_dashboard"):
+                return view
+        return None
+
+    def init_context(self):
+        """Initialize the data structure for the window."""
+        try:
+            # Smart detection of the project root
+            project_root = self.determine_best_root()
+
             self.window.aider_context = {
                 'files': [],
                 'readonly_files': [],
                 'history': [],
                 'output': [],
                 'mode': 'code',
-                'process': None
+                'model': 'gpt-4o (default)',
+                'project_root': project_root,
+                'api_status': self.check_api_keys(project_root)
             }
+        except Exception:
+            print("AiderSavvy Error in init_context:")
+            traceback.print_exc()
 
-        self.refresh_dashboard(view)
+    def determine_best_root(self):
+        """
+        Scans all open folders to find the best candidate for the project root.
+        Priority:
+        1. Folder containing .env
+        2. Folder containing .git
+        3. First folder in the list
+        4. Directory of active file
+        5. User home
+        """
+        folders = self.window.folders()
+
+        if not folders:
+            # No folders open, try active file
+            view = self.window.active_view()
+            if view and view.file_name():
+                return os.path.dirname(view.file_name())
+            return os.path.expanduser("~")
+
+        # 1. Look for .env (Highest priority)
+        for folder in folders:
+            if os.path.exists(os.path.join(folder, ".env")):
+                return folder
+
+        # 2. Look for .git
+        for folder in folders:
+            if os.path.exists(os.path.join(folder, ".git")):
+                return folder
+
+        # 3. Default to first folder
+        return folders[0]
+
+    def check_api_keys(self, root):
+        """Check for API keys in env vars or .env file."""
+        keys_found = []
+        try:
+            # 1. Check OS Environment
+            common_keys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY"]
+            for key in common_keys:
+                if os.environ.get(key):
+                    keys_found.append("{} (System Env)".format(key))
+
+            # 2. Check local .env file
+            env_path = os.path.join(root, ".env")
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        for key in common_keys:
+                            if key in content and key not in [k.split()[0] for k in keys_found]:
+                                 keys_found.append("{} (.env)".format(key))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        return keys_found if keys_found else ["No API keys detected (check .env)"]
 
     def refresh_dashboard(self, view):
-        """Rafraîchir l'affichage du dashboard"""
-        current_view = view.settings().get("aider_savvy_view", "status")
+        """Refresh dashboard display based on current view state."""
+        try:
+            if not view.is_valid(): return
 
-        if current_view == "status":
-            self.render_status(view)
-        elif current_view == "files":
-            self.render_files(view)
-        elif current_view == "output":
-            self.render_output(view)
-        elif current_view == "commands":
-            self.render_commands(view)
+            current_view = view.settings().get("aider_savvy_view", "status")
+
+            # Ensure context exists (handling accidental context loss)
+            if not hasattr(self.window, 'aider_context'):
+                self.init_context()
+
+            # Refresh API status if file exists (lightweight check)
+            ctx = self.window.aider_context
+            if os.path.exists(os.path.join(ctx['project_root'], ".env")):
+                 ctx['api_status'] = self.check_api_keys(ctx['project_root'])
+
+            if current_view == "status":
+                self.render_status(view)
+            elif current_view == "files":
+                self.render_files(view)
+            elif current_view == "output":
+                self.render_output(view)
+            elif current_view == "commands":
+                self.render_commands(view)
+        except Exception:
+            traceback.print_exc()
 
     def render_status(self, view):
-        """Afficher l'écran de statut principal"""
         ctx = self.window.aider_context
-
         content = []
         content.append("=" * 80)
         content.append("  AIDER - AI Pair Programming")
         content.append("=" * 80)
         content.append("")
-        content.append("  Mode: {}".format(ctx['mode'].upper()))
-        content.append("  Files in chat: {}".format(len(ctx['files'])))
-        content.append("  Read-only files: {}".format(len(ctx['readonly_files'])))
+        content.append("  Project Root : {}".format(ctx.get('project_root', 'Unknown')))
+        content.append("  Current Model: {}".format(ctx.get('model', 'Unknown')))
+        content.append("  Active Mode  : {}".format(ctx.get('mode', 'code').upper()))
+        content.append("")
+        content.append("-" * 80)
+        content.append("  API Configuration:")
+        content.append("-" * 80)
+        for status in ctx.get('api_status', []):
+             content.append("  * {}".format(status))
+        content.append("")
+        content.append("-" * 80)
+        content.append("  Context:")
+        content.append("-" * 80)
+        content.append("  Files in chat   : {}".format(len(ctx.get('files', []))))
+        content.append("  Read-only files : {}".format(len(ctx.get('readonly_files', []))))
         content.append("")
         content.append("-" * 80)
         content.append("  Quick Actions:")
         content.append("-" * 80)
+        content.append("  a - Add files    d - Drop files")
+        content.append("  c - Send prompt  o - Show output")
+        content.append("  / - Commands     e - Open .env")
+        content.append("  s - Switch Root  g - Global Config")
         content.append("")
-        content.append("  a - Add files to chat")
-        content.append("  r - Add read-only files")
-        content.append("  d - Drop files from chat")
-        content.append("  c - Send command/prompt")
-        content.append("  o - Show output")
-        content.append("  m - Change mode")
-        content.append("  / - Run aider command")
-        content.append("")
-        content.append("  TAB - Cycle views (Status → Files → Output → Commands)")
-        content.append("  q - Close dashboard")
+        content.append("  TAB - Cycle views (Status -> Files -> Output -> Commands)")
+        content.append("  q   - Close dashboard")
         content.append("")
 
-        if ctx['files']:
+        files = ctx.get('files', [])
+        if files:
             content.append("-" * 80)
-            content.append("  Files in Chat:")
+            content.append("  Active Files Preview:")
             content.append("-" * 80)
-            for f in ctx['files']:
+            for f in files[:5]:
                 content.append("    • {}".format(f))
-            content.append("")
-
-        if ctx['output']:
-            content.append("-" * 80)
-            content.append("  Recent Output:")
-            content.append("-" * 80)
-            for line in ctx['output'][-5:]:
-                content.append("    {}".format(line))
+            if len(files) > 5:
+                content.append("    ... and {} more".format(len(files) - 5))
             content.append("")
 
         self._update_view_content(view, "\n".join(content))
 
     def render_files(self, view):
-        """Afficher la liste des fichiers"""
         ctx = self.window.aider_context
-
         content = []
         content.append("=" * 80)
         content.append("  AIDER - Files Management")
@@ -107,91 +219,62 @@ class AiderSavvyCommand(sublime_plugin.WindowCommand):
         content.append("-" * 80)
         content.append("  Files in Chat (editable):")
         content.append("-" * 80)
-
-        if ctx['files']:
+        if ctx.get('files'):
             for i, f in enumerate(ctx['files'], 1):
                 content.append("  {}. {}".format(i, f))
         else:
             content.append("    (no files)")
-
         content.append("")
         content.append("-" * 80)
         content.append("  Read-only Files:")
         content.append("-" * 80)
-
-        if ctx['readonly_files']:
+        if ctx.get('readonly_files'):
             for i, f in enumerate(ctx['readonly_files'], 1):
                 content.append("  {}. {} [read-only]".format(i, f))
         else:
             content.append("    (no read-only files)")
-
-        content.append("")
-
         self._update_view_content(view, "\n".join(content))
 
     def render_output(self, view):
-        """Afficher l'output d'Aider"""
         ctx = self.window.aider_context
-
         content = []
         content.append("=" * 80)
         content.append("  AIDER - Output")
         content.append("=" * 80)
         content.append("")
         content.append("  c - Clear output    TAB - Next view")
-        content.append("")
         content.append("-" * 80)
-
-        if ctx['output']:
+        if ctx.get('output'):
             content.extend(ctx['output'])
         else:
             content.append("  (no output yet)")
-
-        content.append("")
-
         self._update_view_content(view, "\n".join(content))
 
     def render_commands(self, view):
-        """Afficher la liste des commandes disponibles"""
         commands = [
             ("/add", "Add files to the chat"),
             ("/drop", "Remove files from the chat"),
-            ("/read-only", "Add files as read-only"),
+            ("/model", "Switch LLM Model"),
             ("/ask", "Ask questions without editing"),
             ("/code", "Ask for code changes"),
-            ("/architect", "Use architect/editor mode"),
             ("/commit", "Commit edits to repo"),
             ("/diff", "Display diff of changes"),
-            ("/undo", "Undo last git commit"),
             ("/map", "Print repository map"),
-            ("/tokens", "Report token usage"),
             ("/clear", "Clear chat history"),
-            ("/reset", "Drop all files and clear history"),
-            ("/chat-mode", "Switch chat mode"),
-            ("/model", "Switch Main Model"),
             ("/help", "Get help"),
         ]
-
         content = []
         content.append("=" * 80)
         content.append("  AIDER - Available Commands")
         content.append("=" * 80)
         content.append("")
-        content.append("  / - Execute command    TAB - Next view")
-        content.append("")
+        content.append("  Press '/' to execute any command    TAB - Next view")
         content.append("-" * 80)
-
         for cmd, desc in commands:
             content.append("  {:20} - {}".format(cmd, desc))
-
-        content.append("")
-        content.append("  Press '/' to execute any command")
-        content.append("")
-
         self._update_view_content(view, "\n".join(content))
 
     def _update_view_content(self, view, content):
-        """Mettre à jour le contenu d'une vue"""
         view.set_read_only(False)
         view.run_command("select_all")
         view.run_command("right_delete")
@@ -200,184 +283,107 @@ class AiderSavvyCommand(sublime_plugin.WindowCommand):
         view.sel().clear()
         view.sel().add(sublime.Region(0, 0))
 
-
 class AiderSavvyTabCommand(sublime_plugin.TextCommand):
-    """Commande pour cycler entre les vues avec Tab"""
-
+    """Cycle through views with Tab."""
     def run(self, edit):
         if not self.view.settings().get("aider_savvy_dashboard"):
             return
 
         current = self.view.settings().get("aider_savvy_view", "status")
         views = ["status", "files", "output", "commands"]
-
         try:
             current_index = views.index(current)
             next_index = (current_index + 1) % len(views)
             self.view.settings().set("aider_savvy_view", views[next_index])
 
-            self.view.window().run_command("aider_savvy_refresh")
+            # Safe refresh call
+            if self.view.window():
+                self.view.window().run_command("aider_savvy_refresh")
         except ValueError:
             pass
 
-    def is_enabled(self):
-        return self.view.settings().get("aider_savvy_dashboard", False)
-
-
 class AiderSavvyRefreshCommand(sublime_plugin.WindowCommand):
-    """Rafraîchir le dashboard"""
-
+    """Refreshes the dashboard."""
     def run(self):
         view = self.window.active_view()
         if view and view.settings().get("aider_savvy_dashboard"):
             aider_cmd = AiderSavvyCommand(self.window)
             aider_cmd.refresh_dashboard(view)
 
-
-class AiderSavvyAddFilesCommand(sublime_plugin.WindowCommand):
-    """Ajouter des fichiers au chat"""
-
-    def run(self):
-        # Obtenir les fichiers du projet
-        folders = self.window.folders()
-        if not folders:
-            sublime.message_dialog("No project folder open")
-            return
-
-        self.window.show_input_panel(
-            "Add files (space-separated or pattern):",
-            "",
-            self.on_done,
-            None,
-            None
-        )
-
-    def on_done(self, text):
-        if not text:
-            return
-
-        files = text.split()
-        ctx = self.window.aider_context
-
-        for f in files:
-            if f not in ctx['files']:
-                ctx['files'].append(f)
-
-        self.window.run_command("aider_savvy_refresh")
-
-
-class AiderSavvyDropFilesCommand(sublime_plugin.WindowCommand):
-    """Retirer des fichiers du chat"""
-
-    def run(self):
-        ctx = self.window.aider_context
-
-        if not ctx['files']:
-            sublime.message_dialog("No files in chat")
-            return
-
-        items = [[f, ""] for f in ctx['files']]
-
-        def on_done(index):
-            if index >= 0:
-                removed = ctx['files'].pop(index)
-                sublime.status_message("Removed: {}".format(removed))
-                self.window.run_command("aider_savvy_refresh")
-
-        self.window.show_quick_panel(items, on_done)
-
-
-class AiderSavvySendPromptCommand(sublime_plugin.WindowCommand):
-    """Envoyer une commande/prompt à Aider"""
-
-    def run(self, text=None):
-        if text is None:
-            self.window.show_input_panel(
-                "Enter prompt or command:",
-                "",
-                self.on_done,
-                None,
-                None
-            )
-        else:
-            self.on_done(text)
-
-    def on_done(self, text):
-        if not text:
-            return
-
-        ctx = self.window.aider_context
-
-        # Exécuter Aider avec la commande
-        threading.Thread(
-            target=self.run_aider,
-            args=(text,)
-        ).start()
-
-    def run_aider(self, prompt):
-        ctx = self.window.aider_context
-
-        cmd = ["aider"]
-
-        # Ajouter les fichiers
-        for f in ctx['files']:
-            cmd.extend(["--file", f])
-
-        for f in ctx['readonly_files']:
-            cmd.extend(["--read", f])
-
-        # Ajouter le mode
-        if ctx['mode'] == 'ask':
-            cmd.append("--ask")
-        elif ctx['mode'] == 'architect':
-            cmd.append("--architect")
-
-        # Ajouter le prompt
-        cmd.extend(["--message", prompt])
-        cmd.append("--no-auto-commits")
-        cmd.append("--yes")
-
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=self.window.folders()[0] if self.window.folders() else None
-            )
-
-            output = result.stdout + result.stderr
-            timestamp = datetime.now().strftime("%H:%M:%S")
-
-            ctx['output'].append("[{}] > {}".format(timestamp, prompt))
-            ctx['output'].extend(output.split('\n'))
-
-            sublime.set_timeout(
-                lambda: self.window.run_command("aider_savvy_refresh"),
-                0
-            )
-
-        except Exception as e:
-            ctx['output'].append("Error: {}".format(str(e)))
-
-
-class AiderSavvyChangeModeCommand(sublime_plugin.WindowCommand):
-    """Changer le mode Aider"""
-
-    def run(self):
-        modes = ["code", "ask", "architect"]
-
-        def on_done(index):
-            if index >= 0:
-                self.window.aider_context['mode'] = modes[index]
-                self.window.run_command("aider_savvy_refresh")
-
-        self.window.show_quick_panel(modes, on_done)
-
-
+# --- CRITICAL MISSING PIECE RESTORED ---
 class AiderSavvyEventListener(sublime_plugin.EventListener):
-    """Gestionnaire d'événements pour les raccourcis clavier"""
+    """Event Listener for Key Bindings Context."""
 
     def on_query_context(self, view, key, operator, operand, match_all):
         if key == "aider_savvy_dashboard":
-            return view.settings().get("aider_savvy_dashboard", False)
+            # Check if current view is our dashboard
+            is_dashboard = view.settings().get("aider_savvy_dashboard", False)
+
+            if operator == sublime.OP_EQUAL:
+                return is_dashboard == operand
+            elif operator == sublime.OP_NOT_EQUAL:
+                return is_dashboard != operand
+
         return None
+
+# --- Configuration Management Commands ---
+
+class AiderSavvyOpenEnvCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        # Fallback init if needed
+        if not hasattr(self.window, 'aider_context'):
+             self.window.run_command("aider_savvy")
+
+        sublime.set_timeout(self._open_env, 100)
+
+    def _open_env(self):
+        if hasattr(self.window, 'aider_context'):
+            root = self.window.aider_context['project_root']
+            env_file = os.path.join(root, ".env")
+
+            if os.path.exists(env_file):
+                self.window.open_file(env_file)
+            else:
+                if sublime.ok_cancel_dialog("Create .env at {}?".format(root), "Create"):
+                    try:
+                        with open(env_file, 'w', encoding='utf-8') as f:
+                            f.write("# Aider API Keys\n#OPENAI_API_KEY=\n")
+                        self.window.open_file(env_file)
+                    except Exception as e:
+                        sublime.error_message("Error: {}".format(e))
+
+class AiderSavvyOpenGlobalConfigCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        if os.path.exists(AIDER_CONF_PATH):
+            self.window.open_file(AIDER_CONF_PATH)
+        else:
+            if sublime.ok_cancel_dialog("Create {}?".format(AIDER_CONF_PATH), "Create"):
+                try:
+                    with open(AIDER_CONF_PATH, 'w', encoding='utf-8') as f:
+                        f.write("# Aider Global Configuration\nmodel: gpt-4o\n")
+                    self.window.open_file(AIDER_CONF_PATH)
+                except Exception:
+                    pass
+
+class AiderSavvySwitchProjectRootCommand(sublime_plugin.WindowCommand):
+    """Switch the project root folder."""
+    def run(self):
+        folders = self.window.folders()
+        if not folders:
+            sublime.status_message("No project folders open.")
+            return
+
+        def on_done(index):
+            if index >= 0:
+                new_root = folders[index]
+                if hasattr(self.window, 'aider_context'):
+                    ctx = self.window.aider_context
+                    ctx['project_root'] = new_root
+                    # Recheck keys for the new root
+                    ctx['api_status'] = AiderSavvyCommand(self.window).check_api_keys(new_root)
+                    self.window.run_command("aider_savvy_refresh")
+                    sublime.status_message("Switched Aider root to: {}".format(os.path.basename(new_root)))
+
+        # Display short names for better UX
+        display_names = [os.path.basename(f) + " ({})".format(f) for f in folders]
+        self.window.show_quick_panel(display_names, on_done)

@@ -27,7 +27,7 @@ contexts:
       scope: keyword.control.aider
 
   commands:
-    - match: '/(add|drop|read-only|ask|code|architect|commit|diff|undo|map|tokens|clear|reset|help|ls|git|run|test)'
+    - match: '/(add|drop|read-only|ask|code|architect|commit|diff|undo|map|tokens|chat-mode|model|clear|reset|help|ls|git|run|test)'
       scope: support.function.command.aider
 
   files:
