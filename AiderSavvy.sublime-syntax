@@ -1,0 +1,43 @@
+%YAML 1.2
+---
+name: AiderSavvy
+file_extensions: [aider]
+scope: source.aider
+
+contexts:
+  main:
+    - include: comments
+    - include: headings
+    - include: keys
+    - include: commands
+    - include: files
+
+  headings:
+    - match: ^=+$
+      scope: entity.name.section.aider
+    - match: ^-+$
+      scope: punctuation.definition.separator.aider
+    - match: "^  AIDER - .*$"
+      scope: entity.name.tag.aider
+
+  keys:
+    - match: '\b[a-z]\b(?= - )'
+      scope: constant.character.key.aider
+    - match: 'TAB|ENTER|SHIFT'
+      scope: keyword.control.aider
+
+  commands:
+    - match: '/(add|drop|read-only|ask|code|architect|commit|diff|undo|map|tokens|clear|reset|help|ls|git|run|test)'
+      scope: support.function.command.aider
+
+  files:
+    - match: '• .+$'
+      scope: string.quoted.other.aider
+    - match: '\d+\. .+$'
+      scope: variable.parameter.aider
+    - match: '\[read-only\]'
+      scope: comment.line.aider
+
+  comments:
+    - match: '\([^)]+\)'
+      scope: comment.block.aider

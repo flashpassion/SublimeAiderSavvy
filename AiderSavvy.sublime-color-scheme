@@ -1,0 +1,126 @@
+{
+    "name": "AiderSavvy Dashboard",
+    "author": "AiderSavvy",
+    "variables": {
+        "blue": "#00BCD4",
+        "blue2": "#0277BD",
+        "blue3": "#01579B",
+        "green": "#4CAF50",
+        "orange": "#FF9800",
+        "red": "#F44336",
+        "purple": "#9C27B0",
+        "white": "#ECEFF1",
+        "grey": "#78909C",
+        "grey2": "#455A64",
+        "yellow": "#FFC107"
+    },
+    "globals": {
+        "background": "#263238",
+        "foreground": "var(white)",
+        "caret": "var(orange)",
+        "line_highlight": "#37474F",
+        "selection": "var(blue2)",
+        "selection_border": "var(blue)",
+        "inactive_selection": "#37474F",
+        "find_highlight": "var(yellow)",
+        "find_highlight_foreground": "#263238",
+        "guide": "#546E7A",
+        "active_guide": "var(blue)",
+        "stack_guide": "#546E7A",
+        "bracket_contents_foreground": "var(blue)",
+        "brackets_foreground": "var(orange)",
+        "tags_foreground": "var(purple)"
+    },
+    "rules": [
+        {
+            "name": "Separator Line",
+            "scope": "markup.heading.separator.aider_savvy",
+            "foreground": "var(blue)"
+        },
+        {
+            "name": "Minor Separator",
+            "scope": "markup.heading.separator.minor.aider_savvy",
+            "foreground": "var(grey)"
+        },
+        {
+            "name": "Title",
+            "scope": "markup.heading.title.aider_savvy",
+            "foreground": "var(blue)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Section Header",
+            "scope": "entity.name.section.aider_savvy",
+            "foreground": "var(green)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Keyword",
+            "scope": "keyword.control.aider_savvy",
+            "foreground": "var(purple)",
+            "font_style": "bold"
+        },
+        {
+            "name": "String Value",
+            "scope": "string.unquoted.aider_savvy",
+            "foreground": "var(white)"
+        },
+        {
+            "name": "Shortcut Key",
+            "scope": "constant.character.shortcut.aider_savvy",
+            "foreground": "var(orange)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Special Shortcut",
+            "scope": "constant.character.shortcut.special.aider_savvy",
+            "foreground": "var(blue)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Description",
+            "scope": "comment.line.description.aider_savvy",
+            "foreground": "var(grey)"
+        },
+        {
+            "name": "Filename",
+            "scope": "string.unquoted.filename.aider_savvy",
+            "foreground": "var(yellow)"
+        },
+        {
+            "name": "Read-only Tag",
+            "scope": "keyword.control.readonly.aider_savvy",
+            "foreground": "var(orange)",
+            "font_style": "italic"
+        },
+        {
+            "name": "Command",
+            "scope": "support.function.command.aider_savvy",
+            "foreground": "var(green)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Timestamp",
+            "scope": "constant.numeric.timestamp.aider_savvy",
+            "foreground": "var(grey)"
+        },
+        {
+            "name": "Error",
+            "scope": "invalid.illegal.error.aider_savvy",
+            "foreground": "var(red)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Success",
+            "scope": "string.other.success.aider_savvy",
+            "foreground": "var(green)",
+            "font_style": "bold"
+        },
+        {
+            "name": "Empty State",
+            "scope": "comment.line.empty.aider_savvy",
+            "foreground": "var(grey)",
+            "font_style": "italic"
+        }
+    ]
+}

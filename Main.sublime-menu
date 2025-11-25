@@ -1,0 +1,119 @@
+[
+    {
+        "id": "tools",
+        "children": [
+            {
+                "id": "aider_savvy",
+                "caption": "AiderSavvy",
+                "children": [
+                    {
+                        "caption": "Open Dashboard",
+                        "command": "aider_savvy"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Add Current File",
+                        "command": "aider_savvy_quick_add"
+                    },
+                    {
+                        "caption": "Add Files...",
+                        "command": "aider_savvy_add_files"
+                    },
+                    {
+                        "caption": "Add Read-only Files...",
+                        "command": "aider_savvy_add_readonly"
+                    },
+                    {
+                        "caption": "Drop Files...",
+                        "command": "aider_savvy_drop_files"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Send Prompt",
+                        "command": "aider_savvy_send_prompt"
+                    },
+                    {
+                        "caption": "Run Command...",
+                        "command": "aider_savvy_run_command"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Show Diff",
+                        "command": "aider_savvy_diff"
+                    },
+                    {
+                        "caption": "Show Token Usage",
+                        "command": "aider_savvy_tokens"
+                    },
+                    {
+                        "caption": "Show Repository Map",
+                        "command": "aider_savvy_map"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Commit Changes...",
+                        "command": "aider_savvy_commit"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Change Mode",
+                        "command": "aider_savvy_change_mode"
+                    },
+                    {
+                        "caption": "Launch Interactive Shell",
+                        "command": "aider_savvy_interactive_shell"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Clear Output",
+                        "command": "aider_savvy_clear_output"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "preferences",
+        "children": [
+            {
+                "caption": "Package Settings",
+                "id": "package-settings",
+                "children": [
+                    {
+                        "caption": "AiderSavvy",
+                        "children": [
+                            {
+                                "caption": "Settings",
+                                "command": "edit_settings",
+                                "args": {
+                                    "base_file": "${packages}/AiderSavvy/AiderSavvy.sublime-settings",
+                                    "default": "{\n\t$0\n}\n"
+                                }
+                            },
+                            {
+                                "caption": "Key Bindings",
+                                "command": "edit_settings",
+                                "args": {
+                                    "base_file": "${packages}/AiderSavvy/Default.sublime-keymap",
+                                    "default": "[\n\t$0\n]\n"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,97 @@
+[
+    // Ouvrir le dashboard Aider
+    {
+        "keys": ["ctrl+shift+a"],
+        "command": "aider_savvy"
+    },
+
+    // Navigation avec Tab dans le dashboard
+    {
+        "keys": ["tab"],
+        "command": "aider_savvy_tab",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Fermer le dashboard
+    {
+        "keys": ["q"],
+        "command": "close_file",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Ajouter des fichiers
+    {
+        "keys": ["a"],
+        "command": "aider_savvy_add_files",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Retirer des fichiers
+    {
+        "keys": ["d"],
+        "command": "aider_savvy_drop_files",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Ajouter des fichiers read-only
+    {
+        "keys": ["r"],
+        "command": "aider_savvy_add_readonly",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Envoyer une commande/prompt
+    {
+        "keys": ["c"],
+        "command": "aider_savvy_send_prompt",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Exécuter une commande Aider (/)
+    {
+        "keys": ["/"],
+        "command": "aider_savvy_run_command",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Changer de mode
+    {
+        "keys": ["m"],
+        "command": "aider_savvy_change_mode",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Rafraîchir le dashboard
+    {
+        "keys": ["f5"],
+        "command": "aider_savvy_refresh",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    },
+
+    // Voir l'output
+    {
+        "keys": ["o"],
+        "command": "aider_savvy_show_output",
+        "context": [
+            {"key": "aider_savvy_dashboard"}
+        ]
+    }
+]
