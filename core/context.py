@@ -1,5 +1,6 @@
 # AiderSavvy - Session context management
 import os
+import re
 
 
 class AiderContext:
@@ -226,53 +227,185 @@ class AiderContext:
         return os.path.join(self.project_root, ".aider.input.history")
 
     def sync_from_existing_session(self):
-        """Detect files from an existing Aider session."""
-        import json
+        """Detect files, model and mode from an existing Aider session by parsing .aider.chat.history.md."""
+        history_path = self.get_aider_history_path()
         
-        # Méthode 1: Lire .aider.tags.cache.v3/cache.json si existe
-        cache_dir = os.path.join(self.project_root, ".aider.tags.cache.v3")
-        cache_file = os.path.join(cache_dir, "cache.json")
+        if not os.path.exists(history_path):
+            return False
         
-        if os.path.exists(cache_file):
-            try:
-                with open(cache_file, 'r') as f:
-                    cache = json.load(f)
-                    for filepath in cache.keys():
-                        rel_path = os.path.relpath(filepath, self.project_root)
-                        if rel_path not in self.files and rel_path not in self.readonly_files:
-                            self.files.append(rel_path)
-                return True
-            except Exception as e:
-                print("AiderSavvy: Error reading cache: {0}".format(e))
+        try:
+            with open(history_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            
+            # Find the last session block (starts with "# aider chat started at")
+            sessions = content.split('# aider chat started at')
+            if len(sessions) < 2:
+                return False
+            
+            # Get the last session content
+            last_session = sessions[-1]
+            
+            # Parse the last session to get current state
+            self._parse_session_for_state(last_session)
+            
+            return True
+            
+        except Exception as e:
+            print("AiderSavvy: Error reading chat history: {0}".format(e))
+            return False
+
+    def _parse_session_for_state(self, session_content):
+        """Parse a session block to extract current model, mode and files."""
+        lines = session_content.split('\n')
         
-        # Méthode 2: Parser .aider.input.history pour les commandes /add
-        history_path = self.get_aider_input_history_path()
-        if os.path.exists(history_path):
-            try:
-                with open(history_path, 'r', encoding='utf-8', errors='replace') as f:
-                    for line in f:
-                        line = line.strip()
-                        if line.startswith('/add '):
-                            filepath = line[5:].strip()
-                            if filepath and filepath not in self.files:
-                                self.files.append(filepath)
-                        elif line.startswith('/read-only ') or line.startswith('/read '):
-                            parts = line.split(' ', 1)
-                            if len(parts) > 1:
-                                filepath = parts[1].strip()
-                                if filepath and filepath not in self.readonly_files:
-                                    self.readonly_files.append(filepath)
-                        elif line.startswith('/drop '):
-                            filepath = line[6:].strip()
-                            if filepath in self.files:
-                                self.files.remove(filepath)
-                            if filepath in self.readonly_files:
-                                self.readonly_files.remove(filepath)
-                return True
-            except Exception as e:
-                print("AiderSavvy: Error reading input history: {0}".format(e))
+        # Track files - we need to process in order to handle add/drop
+        session_files = []
+        session_readonly = []
         
-        return False
+        # Patterns for extraction
+        model_pattern = re.compile(r'Main model: ([^\s]+)')
+        mode_pattern = re.compile(r'with (code|ask|architect) edit format')
+        added_pattern = re.compile(r'Added ([^\s]+) to the chat\.')
+        dropped_pattern = re.compile(r'Dropped ([^\s]+) from the chat\.')
+        readonly_pattern = re.compile(r'Added ([^\s]+) to the chat as read-only\.')
+        
+        last_model = None
+        last_mode = None
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Skip empty lines and markdown headers
+            if not line or line.startswith('#'):
+                continue
+            
+            # Remove leading '> ' from aider output lines
+            if line.startswith('> '):
+                line = line[2:]
+            
+            # Check for model
+            model_match = model_pattern.search(line)
+            if model_match:
+                last_model = model_match.group(1)
+            
+            # Check for mode
+            mode_match = mode_pattern.search(line)
+            if mode_match:
+                last_mode = mode_match.group(1)
+            
+            # Check for added files (read-only first, then regular)
+            readonly_match = readonly_pattern.search(line)
+            if readonly_match:
+                filepath = readonly_match.group(1)
+                if filepath not in session_readonly:
+                    session_readonly.append(filepath)
+                if filepath in session_files:
+                    session_files.remove(filepath)
+                continue
+            
+            added_match = added_pattern.search(line)
+            if added_match:
+                filepath = added_match.group(1)
+                if filepath not in session_files and filepath not in session_readonly:
+                    session_files.append(filepath)
+                continue
+            
+            # Check for dropped files
+            dropped_match = dropped_pattern.search(line)
+            if dropped_match:
+                filepath = dropped_match.group(1)
+                if filepath in session_files:
+                    session_files.remove(filepath)
+                if filepath in session_readonly:
+                    session_readonly.remove(filepath)
+        
+        # Update context with parsed values
+        if last_model:
+            self.model = last_model
+        
+        if last_mode:
+            self.mode = last_mode
+        
+        # Update files lists
+        self.files = session_files
+        self.readonly_files = session_readonly
+
+    def sync_incremental_from_history(self, new_content):
+        """Parse new content appended to history file for incremental updates.
+        Returns tuple (model_changed, mode_changed, files_changed) to indicate what changed."""
+        
+        model_changed = False
+        mode_changed = False
+        files_changed = False
+        
+        # Patterns for extraction
+        model_pattern = re.compile(r'Main model: ([^\s]+)')
+        mode_pattern = re.compile(r'with (code|ask|architect) edit format')
+        added_pattern = re.compile(r'Added ([^\s]+) to the chat\.')
+        dropped_pattern = re.compile(r'Dropped ([^\s]+) from the chat\.')
+        readonly_pattern = re.compile(r'Added ([^\s]+) to the chat as read-only\.')
+        
+        lines = new_content.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Skip empty lines
+            if not line:
+                continue
+            
+            # Remove leading '> ' from aider output lines
+            if line.startswith('> '):
+                line = line[2:]
+            
+            # Check for model change
+            model_match = model_pattern.search(line)
+            if model_match:
+                new_model = model_match.group(1)
+                if new_model != self.model:
+                    self.model = new_model
+                    model_changed = True
+            
+            # Check for mode change
+            mode_match = mode_pattern.search(line)
+            if mode_match:
+                new_mode = mode_match.group(1)
+                if new_mode != self.mode:
+                    self.mode = new_mode
+                    mode_changed = True
+            
+            # Check for read-only files first
+            readonly_match = readonly_pattern.search(line)
+            if readonly_match:
+                filepath = readonly_match.group(1)
+                if filepath not in self.readonly_files:
+                    self.readonly_files.append(filepath)
+                    files_changed = True
+                if filepath in self.files:
+                    self.files.remove(filepath)
+                continue
+            
+            # Check for added files
+            added_match = added_pattern.search(line)
+            if added_match:
+                filepath = added_match.group(1)
+                if filepath not in self.files and filepath not in self.readonly_files:
+                    self.files.append(filepath)
+                    files_changed = True
+                continue
+            
+            # Check for dropped files
+            dropped_match = dropped_pattern.search(line)
+            if dropped_match:
+                filepath = dropped_match.group(1)
+                if filepath in self.files:
+                    self.files.remove(filepath)
+                    files_changed = True
+                if filepath in self.readonly_files:
+                    self.readonly_files.remove(filepath)
+                    files_changed = True
+        
+        return (model_changed, mode_changed, files_changed)
 
     def to_dict(self):
         """Export context as dictionary."""
