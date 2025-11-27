@@ -111,10 +111,28 @@
         ]
     },
 
-    // Send message to Aider
+    // Send message to Aider (single line when multiline disabled)
     {
         "keys": ["c"],
         "command": "aider_savvy_send_message",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true},
+            {"key": "setting.aider_multiline_enabled", "operator": "equal", "operand": false}
+        ]
+    },
+    // Send multiline message (when multiline enabled)
+    {
+        "keys": ["c"],
+        "command": "aider_savvy_send_multiline",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true},
+            {"key": "setting.aider_multiline_enabled", "operator": "equal", "operand": true}
+        ]
+    },
+    // Force send multiline message
+    {
+        "keys": ["C"],
+        "command": "aider_savvy_send_multiline",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
         ]
@@ -144,7 +162,7 @@
 
     // Add current file
     {
-        "keys": ["A"],
+        "keys": ["shift+a"],
         "command": "aider_savvy_add_current_file",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
