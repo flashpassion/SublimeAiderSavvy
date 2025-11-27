@@ -213,6 +213,41 @@ class AiderSavvySyncSessionCommand(sublime_plugin.WindowCommand):
             sublime.status_message("No existing Aider session found")
 
 
+class AiderSavvySendMultilineCommand(sublime_plugin.WindowCommand):
+    """Send a multiline message to Aider (opens in new buffer)."""
+
+    def run(self):
+        # Create a temporary buffer for multiline input
+        view = self.window.new_file()
+        view.set_name("Aider - Multiline Message")
+        view.set_scratch(True)
+        view.settings().set("aider_multiline_input", True)
+        
+        # Set syntax if available
+        try:
+            view.assign_syntax("Packages/Text/Plain text.tmLanguage")
+        except:
+            pass
+        
+        # Add an on_close event listener
+        view.settings().set("on_close_callback", lambda: self.on_done(view))
+
+    def on_done(self, view):
+        """Called when the multiline buffer is saved/closed."""
+        content = view.substr(sublime.Region(0, view.size()))
+        if content.strip():
+            instance = get_aider_instance(self.window)
+            if instance.terminal.is_running():
+                instance.terminal.send_message(content)
+                sublime.status_message("Multiline message sent to Aider")
+            else:
+                sublime.status_message("Start terminal first with [t]")
+        
+        # Close the temporary buffer
+        if view.is_valid():
+            view.close()
+
+
 class AiderSavvyRefreshOutputCommand(sublime_plugin.WindowCommand):
     """Refresh output from history file."""
 

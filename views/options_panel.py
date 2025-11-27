@@ -38,6 +38,7 @@ class OptionsPanel:
         lines.append("  [m] Mode    : {0}".format(ctx.mode.upper()))
         lines.append("  [M] Model   : {0}".format(current_model_display))
         lines.append("  [R] Root    : {0}".format(ctx.project_root))
+        lines.append("  [L] Multiline: {0}".format("ENABLED" if ctx.multiline_enabled else "disabled"))
         lines.append("")
 
         # API Keys

@@ -1,6 +1,7 @@
 # AiderSavvy - Dashboard command
 import sublime
 import sublime_plugin
+import os
 
 from ..core.context import AiderContext
 from ..core.terminal import AiderTerminal
@@ -154,13 +155,14 @@ class AiderSavvyInstance:
         self.main_view.show(0)
 
     def start_file_watcher(self):
-        """Start watching Aider output file."""
+        """Start watching Aider output file and session changes."""
         if self.file_watcher:
             self.file_watcher.stop()
 
         self.file_watcher = AiderFileWatcher(
             self.context,
-            self.on_new_output
+            self.on_new_output,
+            self.on_session_change
         )
         self.file_watcher.start()
 
@@ -170,6 +172,46 @@ class AiderSavvyInstance:
         # If on output tab, refresh
         if self.current_tab == self.TAB_OUTPUT:
             self.render_current_tab()
+
+    def on_session_change(self, change_type):
+        """Callback when session files (cache or input history) change."""
+        if change_type == "CACHE":
+            # Sync files from cache
+            if self.context.sync_from_existing_session():
+                self.refresh_files()
+                sublime.status_message("Files synced from Aider session")
+        elif change_type == "INPUT_HISTORY":
+            # Check for model/mode changes
+            self._sync_model_from_history()
+            self.refresh_options()
+
+    def _sync_model_from_history(self):
+        """Extract model and mode changes from input history."""
+        history_path = self.context.get_aider_input_history_path()
+        if not os.path.exists(history_path):
+            return
+        
+        try:
+            with open(history_path, 'r', encoding='utf-8', errors='replace') as f:
+                lines = f.readlines()
+            
+            # Read backwards to find the most recent model/mode commands
+            for line in reversed(lines):
+                line = line.strip()
+                if line.startswith('/model '):
+                    new_model = line[7:].strip()
+                    if new_model and new_model != self.context.model:
+                        self.context.set_model(new_model)
+                        sublime.status_message("Model updated to: {0}".format(new_model))
+                        break
+                elif line.startswith('/mode '):
+                    new_mode = line[6:].strip()
+                    if new_mode in ['code', 'ask', 'architect'] and new_mode != self.context.mode:
+                        self.context.set_mode(new_mode)
+                        sublime.status_message("Mode updated to: {0}".format(new_mode))
+                        break
+        except Exception as e:
+            print("AiderSavvy: Error reading input history: {0}".format(e))
 
     def refresh_all(self):
         """Refresh current view."""

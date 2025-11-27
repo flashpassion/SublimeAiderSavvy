@@ -16,6 +16,7 @@ class AiderContext:
         self.terminal_tag = 'aider_terminal'
         self.api_keys = self._detect_api_keys()
         self.model_aliases = self._detect_model_aliases()
+        self.multiline_enabled = self._detect_multiline_config()
 
     def _determine_project_root(self):
         """Find the best project root directory."""
@@ -89,6 +90,32 @@ class AiderContext:
                 pass
 
         return keys_found if keys_found else ["No API keys detected"]
+
+    def _detect_multiline_config(self):
+        """Detect if multiline mode is enabled in aider config."""
+        # Check local .aider.conf.yml
+        local_conf = os.path.join(self.project_root, ".aider.conf.yml")
+        if os.path.exists(local_conf):
+            try:
+                with open(local_conf, 'r') as f:
+                    content = f.read()
+                    if 'multiline: true' in content.lower():
+                        return True
+            except Exception:
+                pass
+        
+        # Check global ~/.aider.conf.yml
+        global_conf = os.path.expanduser("~/.aider.conf.yml")
+        if os.path.exists(global_conf):
+            try:
+                with open(global_conf, 'r') as f:
+                    content = f.read()
+                    if 'multiline: true' in content.lower():
+                        return True
+            except Exception:
+                pass
+        
+        return False
 
     def _detect_model_aliases(self):
         """Detect model aliases from .aider.conf.yml files."""
