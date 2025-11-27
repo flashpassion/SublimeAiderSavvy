@@ -133,14 +133,14 @@ class AiderSavvyInstance:
 
         for i, tab in enumerate(tabs):
             if i == self.current_tab:
-                indicators.append(">> {0} <<".format(tab))
+                indicators.append(">> {0}".format(tab))
             else:
-                indicators.append("   {0}   ".format(tab))
+                indicators.append("   {0}".format(tab))
 
         header = "  ".join(indicators)
-        separator = "=" * 70
+        separator = "=" * 50
 
-        return "{0}\n{1}\n\n".format(header, separator)
+        return "{0}\n{1}\n{2}\n\n".format(separator, header, separator)
 
     def _update_view_content(self, content):
         """Update the main view content."""
