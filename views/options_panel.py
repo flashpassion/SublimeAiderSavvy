@@ -28,8 +28,15 @@ class OptionsPanel:
         lines.append("  Session Configuration")
         lines.append("-" * 60)
         lines.append("")
+        # Find current model display with alias
+        current_model_display = ctx.model
+        for alias_name, model_name in ctx.model_aliases:
+            if model_name == ctx.model:
+                current_model_display = "{0} → {1}".format(alias_name, model_name)
+                break
+
         lines.append("  [m] Mode    : {0}".format(ctx.mode.upper()))
-        lines.append("  [M] Model   : {0}".format(ctx.model))
+        lines.append("  [M] Model   : {0}".format(current_model_display))
         lines.append("  [R] Root    : {0}".format(ctx.project_root))
         lines.append("")
 
@@ -39,6 +46,19 @@ class OptionsPanel:
         lines.append("-" * 60)
         for key in ctx.api_keys:
             lines.append("    - {0}".format(key))
+        lines.append("")
+
+        # Available Models
+        lines.append("-" * 60)
+        lines.append("  Available Models by Alias ({0})".format(len(ctx.model_aliases)))
+        lines.append("-" * 60)
+        for i, (alias_name, model_name) in enumerate(ctx.model_aliases, 1):
+            if model_name == ctx.model:
+                lines.append("    {0:2}. {1} → {2} [CURRENT]".format(i, alias_name, model_name))
+            else:
+                lines.append("    {0:2}. {1} → {2}".format(i, alias_name, model_name))
+        lines.append("")
+        lines.append("  Note: Use [/model MODEL_NAME] in terminal for specific models")
         lines.append("")
 
         # Quick actions

@@ -107,37 +107,42 @@ class AiderSavvyChangeModeCommand(sublime_plugin.WindowCommand):
 
 
 class AiderSavvyChangeModelCommand(sublime_plugin.WindowCommand):
-    """Change the AI model."""
+    """Change the AI model from available aliases."""
 
     def run(self):
-        models = [
-            "gpt-4o",
-            "gpt-4-turbo",
-            "gpt-3.5-turbo",
-            "claude-3-opus",
-            "claude-3-sonnet",
-            "claude-3-haiku",
-            "deepseek/deepseek-coder",
-            "deepseek/deepseek-chat",
-        ]
-        self.window.show_quick_panel(models, self.on_done)
+        instance = get_aider_instance(self.window)
+        model_aliases = instance.context.model_aliases
+        
+        if not model_aliases:
+            sublime.status_message("No model aliases found in config files")
+            return
+        
+        # Create display list with alias → model format
+        display_list = []
+        for alias_name, model_name in model_aliases:
+            if model_name == instance.context.model:
+                display_list.append("{0} → {1} [CURRENT]".format(alias_name, model_name))
+            else:
+                display_list.append("{0} → {1}".format(alias_name, model_name))
+            
+        self.model_aliases = model_aliases
+        self.window.show_quick_panel(display_list, self.on_done)
 
     def on_done(self, index):
         if index >= 0:
-            models = [
-                "gpt-4o",
-                "gpt-4-turbo",
-                "gpt-3.5-turbo",
-                "claude-3-opus",
-                "claude-3-sonnet",
-                "claude-3-haiku",
-                "deepseek/deepseek-coder",
-                "deepseek/deepseek-chat",
-            ]
             instance = get_aider_instance(self.window)
-            instance.context.set_model(models[index])
-            sublime.status_message("Model: {0}".format(models[index]))
+            selected_alias_name, selected_model = self.model_aliases[index]
+            
+            instance.context.set_model(selected_model)
+            sublime.status_message("Model: {0} → {1}".format(selected_alias_name, selected_model))
             instance.refresh_options()
+            
+            # If terminal running, suggest restart
+            if instance.terminal.is_running():
+                sublime.message_dialog(
+                    "Model changed to {0} → {1}.\n"
+                    "Restart terminal [T] then [t] to apply.".format(selected_alias_name, selected_model)
+                )
 
 
 class AiderSavvyChangeRootCommand(sublime_plugin.WindowCommand):

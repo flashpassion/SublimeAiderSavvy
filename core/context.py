@@ -15,6 +15,7 @@ class AiderContext:
         self.is_running = False
         self.terminal_tag = 'aider_terminal'
         self.api_keys = self._detect_api_keys()
+        self.model_aliases = self._detect_model_aliases()
 
     def _determine_project_root(self):
         """Find the best project root directory."""
@@ -88,6 +89,69 @@ class AiderContext:
                 pass
 
         return keys_found if keys_found else ["No API keys detected"]
+
+    def _detect_model_aliases(self):
+        """Detect model aliases from .aider.conf.yml files."""
+        aliases = [("gpt-4o", "gpt-4o")]  # Default (name, model)
+        
+        # Check local .aider.conf.yml
+        local_conf = os.path.join(self.project_root, ".aider.conf.yml")
+        if os.path.exists(local_conf):
+            try:
+                with open(local_conf, 'r') as f:
+                    content = f.read()
+                    # Look for alias: sections
+                    lines = content.split('\n')
+                    in_alias_section = False
+                    for line in lines:
+                        line = line.strip()
+                        if line.startswith('alias:'):
+                            in_alias_section = True
+                            continue
+                        elif in_alias_section and line and not line.startswith(' ') and not line.startswith('-'):
+                            in_alias_section = False
+                            continue
+                        
+                        if in_alias_section and line.startswith('- '):
+                            # Extract alias name and model
+                            alias_line = line[2:].strip()
+                            if ':' in alias_line:
+                                alias_name = alias_line.split(':', 1)[0].strip().strip('"\'')
+                                model_name = alias_line.split(':', 1)[1].strip().strip('"\'')
+                                # Check if this alias already exists
+                                if not any(model == model_name for _, model in aliases):
+                                    aliases.append((alias_name, model_name))
+            except Exception:
+                pass
+        
+        # Check global ~/.aider.conf.yml
+        global_conf = os.path.expanduser("~/.aider.conf.yml")
+        if os.path.exists(global_conf):
+            try:
+                with open(global_conf, 'r') as f:
+                    content = f.read()
+                    lines = content.split('\n')
+                    in_alias_section = False
+                    for line in lines:
+                        line = line.strip()
+                        if line.startswith('alias:'):
+                            in_alias_section = True
+                            continue
+                        elif in_alias_section and line and not line.startswith(' ') and not line.startswith('-'):
+                            in_alias_section = False
+                            continue
+                        
+                        if in_alias_section and line.startswith('- '):
+                            alias_line = line[2:].strip()
+                            if ':' in alias_line:
+                                alias_name = alias_line.split(':', 1)[0].strip().strip('"\'')
+                                model_name = alias_line.split(':', 1)[1].strip().strip('"\'')
+                                if not any(model == model_name for _, model in aliases):
+                                    aliases.append((alias_name, model_name))
+            except Exception:
+                pass
+        
+        return aliases
 
     def add_file(self, filepath):
         """Add a file to the chat."""

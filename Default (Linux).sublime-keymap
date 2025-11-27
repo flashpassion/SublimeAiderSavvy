@@ -104,7 +104,7 @@
 
     // Stop terminal
     {
-        "keys": ["shift+t"],
+        "keys": ["T"],
         "command": "aider_savvy_stop_terminal",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
@@ -193,7 +193,7 @@
 
     // Change model
     {
-        "keys": ["shift+m"],
+        "keys": ["M"],
         "command": "aider_savvy_change_model",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
@@ -202,7 +202,7 @@
 
     // Change root
     {
-        "keys": ["shift+r"],
+        "keys": ["R"],
         "command": "aider_savvy_change_root",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
@@ -242,7 +242,7 @@
 
     // Sync from existing session
     {
-        "keys": ["shift+s"],
+        "keys": ["S"],
         "command": "aider_savvy_sync_session",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
@@ -255,7 +255,7 @@
 
     // Clear output
     {
-        "keys": ["shift+c"],
+        "keys": ["C"],
         "command": "aider_savvy_clear_output",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
@@ -264,7 +264,7 @@
 
     // Refresh output from file
     {
-        "keys": ["shift+o"],
+        "keys": ["O"],
         "command": "aider_savvy_refresh_output",
         "context": [
             {"key": "aider_savvy_view", "operator": "equal", "operand": true}
