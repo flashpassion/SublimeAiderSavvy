@@ -35,7 +35,7 @@ class AiderContext:
         return folders[0]
 
     def _detect_api_keys(self):
-        """Detect available API keys from environment and .env file."""
+        """Detect available API keys from environment, .env and .aider.conf.yml."""
         keys_found = []
         common_keys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY"]
 
@@ -53,6 +53,37 @@ class AiderContext:
                     for key in common_keys:
                         if key in content and key not in [k.split()[0] for k in keys_found]:
                             keys_found.append("{0} (.env)".format(key))
+            except Exception:
+                pass
+
+        # Check .aider.conf.yml (local)
+        local_conf = os.path.join(self.project_root, ".aider.conf.yml")
+        if os.path.exists(local_conf):
+            try:
+                with open(local_conf, 'r') as f:
+                    content = f.read()
+                    if 'openai-api-key:' in content and 'openai-api-key' not in str(keys_found).lower():
+                        keys_found.append("openai-api-key (.aider.conf.yml)")
+                    if 'anthropic-api-key:' in content and 'anthropic-api-key' not in str(keys_found).lower():
+                        keys_found.append("anthropic-api-key (.aider.conf.yml)")
+                    # Check api-key section for deepseek, gemini, etc.
+                    if 'deepseek=' in content:
+                        keys_found.append("deepseek (.aider.conf.yml)")
+                    if 'gemini=' in content and '#' not in content.split('gemini=')[0].split('\n')[-1]:
+                        keys_found.append("gemini (.aider.conf.yml)")
+            except Exception:
+                pass
+
+        # Check global ~/.aider.conf.yml
+        global_conf = os.path.expanduser("~/.aider.conf.yml")
+        if os.path.exists(global_conf):
+            try:
+                with open(global_conf, 'r') as f:
+                    content = f.read()
+                    if 'openai-api-key:' in content and 'openai' not in str(keys_found).lower():
+                        keys_found.append("openai-api-key (~/.aider.conf.yml)")
+                    if 'anthropic-api-key:' in content and 'anthropic' not in str(keys_found).lower():
+                        keys_found.append("anthropic-api-key (~/.aider.conf.yml)")
             except Exception:
                 pass
 

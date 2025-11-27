@@ -227,6 +227,15 @@
         ]
     },
 
+    // Open local config
+    {
+        "keys": ["l"],
+        "command": "aider_savvy_open_local_config",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
     // ============================================================
     // AIDER SAVVY - Session Commands
     // ============================================================

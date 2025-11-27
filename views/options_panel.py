@@ -49,7 +49,7 @@ class OptionsPanel:
         lines.append("  [t] Start/Focus Terminal    [T] Stop Terminal")
         lines.append("  [c] Send Message            [/] Send Command")
         lines.append("  [e] Edit .env               [g] Open Global Config")
-        lines.append("  [S] Sync from existing session")
+        lines.append("  [l] Open Local Config       [S] Sync from existing session")
         lines.append("")
         lines.append("  [TAB] Next Tab    [SHIFT+TAB] Previous Tab")
         lines.append("  [1] Options  [2] Files  [3] Output")

@@ -31,8 +31,10 @@ from .commands.session_commands import (
     AiderSavvyChangeRootCommand,
     AiderSavvyOpenEnvCommand,
     AiderSavvyOpenGlobalConfigCommand,
+    AiderSavvyOpenLocalConfigCommand,
     AiderSavvyClearOutputCommand,
-    AiderSavvyRefreshOutputCommand
+    AiderSavvyRefreshOutputCommand,
+    AiderSavvySyncSessionCommand
 )
 
 

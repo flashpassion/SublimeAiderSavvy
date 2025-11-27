@@ -178,6 +178,15 @@ class AiderSavvyOpenGlobalConfigCommand(sublime_plugin.WindowCommand):
         self.window.open_file(config_path)
 
 
+class AiderSavvyOpenLocalConfigCommand(sublime_plugin.WindowCommand):
+    """Open the local .aider.conf.yml file."""
+
+    def run(self):
+        instance = get_aider_instance(self.window)
+        config_path = os.path.join(instance.context.project_root, ".aider.conf.yml")
+        self.window.open_file(config_path)
+
+
 class AiderSavvyClearOutputCommand(sublime_plugin.WindowCommand):
     """Clear the output panel."""
 
