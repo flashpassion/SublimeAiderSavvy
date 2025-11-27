@@ -1,17 +1,158 @@
 [
-    { "keys": ["ctrl+alt+a", "F1"], "command": "aider_savvy" },
-    { "keys": ["tab"], "command": "aider_savvy_tab", "context":
-        [
-            { "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }
+    // Open Aider Dashboard
+    {
+        "keys": ["ctrl+shift+a","F1"],
+        "command": "aider_savvy"
+    },
+
+    // Navigate with Tab in dashboard
+    {
+        "keys": ["tab"],
+        "command": "aider_savvy_tab",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
         ]
     },
-    // Shortcuts Dashboard
-    { "keys": ["a"], "command": "aider_savvy_add_files", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["d"], "command": "aider_savvy_drop_files", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["c"], "command": "aider_savvy_send_prompt", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["o"], "command": "aider_savvy_show_output", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["q"], "command": "close", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["e"], "command": "aider_savvy_open_env", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["g"], "command": "aider_savvy_open_global_config", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["/"], "command": "aider_savvy_send_prompt", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] }
+
+    // Close dashboard
+    {
+        "keys": ["q"],
+        "command": "close_file",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Send prompt
+    {
+        "keys": ["c"],
+        "command": "aider_savvy_send_prompt",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Compose long prompt
+    {
+        "keys": ["shift+c"],
+        "command": "aider_savvy_compose_prompt",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Submit composer
+    {
+        "keys": ["ctrl+enter"],
+        "command": "aider_savvy_submit_composer",
+        "context": [
+            {"key": "aider_composer", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Add files
+    {
+        "keys": ["a"],
+        "command": "aider_savvy_add_files",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Drop files
+    {
+        "keys": ["d"],
+        "command": "aider_savvy_drop_files",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Change mode
+    {
+        "keys": ["m"],
+        "command": "aider_savvy_change_mode",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Show output
+    {
+        "keys": ["o"],
+        "command": "aider_savvy_show_output",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Run Aider command
+    {
+        "keys": ["/"],
+        "command": "aider_savvy_run_command",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Interactive shell
+    {
+        "keys": ["t"],
+        "command": "aider_savvy_interactive_shell",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Respond to prompt
+    {
+        "keys": ["i"],
+        "command": "aider_savvy_respond_to_prompt",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Switch project root
+    {
+        "keys": ["s"],
+        "command": "aider_savvy_switch_project_root",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Edit .env
+    {
+        "keys": ["e"],
+        "command": "aider_savvy_open_env",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Clear output (when in output view)
+    {
+        "keys": ["c"],
+        "command": "aider_savvy_clear_output",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true},
+            {"key": "setting.aider_savvy_view", "operator": "equal", "operand": "output"}
+        ]
+    },
+
+    // Refresh dashboard
+    {
+        "keys": ["f5"],
+        "command": "aider_savvy_refresh",
+        "context": [
+            {"key": "aider_savvy_dashboard", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Quick add current file (global)
+    {
+        "keys": ["ctrl+shift+alt+a"],
+        "command": "aider_savvy_quick_add_current_file"
+    }
 ]

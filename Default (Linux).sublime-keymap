@@ -1,17 +1,264 @@
 [
-    { "keys": ["ctrl+alt+a", "F1"], "command": "aider_savvy" },
-    { "keys": ["tab"], "command": "aider_savvy_tab", "context":
-        [
-            { "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }
+    // ============================================================
+    // AIDER SAVVY - Main Commands
+    // ============================================================
+
+    // Open Aider Dashboard (Ctrl+Shift+A)
+    {
+        "keys": ["ctrl+shift+a"],
+        "command": "aider_savvy"
+    },
+
+    // Quick add current file (global)
+    {
+        "keys": ["ctrl+shift+alt+a"],
+        "command": "aider_savvy_add_current_file"
+    },
+
+    // ============================================================
+    // AIDER SAVVY - Tab Navigation (when in Aider view)
+    // ============================================================
+
+    // Next tab with TAB
+    {
+        "keys": ["tab"],
+        "command": "aider_savvy_next_tab",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
         ]
     },
-    // Shortcuts Dashboard
-    { "keys": ["a"], "command": "aider_savvy_add_files", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["d"], "command": "aider_savvy_drop_files", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["c"], "command": "aider_savvy_send_prompt", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["o"], "command": "aider_savvy_show_output", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["q"], "command": "close", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["e"], "command": "aider_savvy_open_env", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["g"], "command": "aider_savvy_open_global_config", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] },
-    { "keys": ["/"], "command": "aider_savvy_send_prompt", "context": [{ "key": "aider_savvy_dashboard", "operator": "equal", "operand": true }] }
+
+    // Previous tab with Shift+TAB
+    {
+        "keys": ["shift+tab"],
+        "command": "aider_savvy_prev_tab",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Go to Options tab
+    {
+        "keys": ["1"],
+        "command": "aider_savvy_go_to_tab",
+        "args": {"tab": 0},
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Go to Files tab
+    {
+        "keys": ["2"],
+        "command": "aider_savvy_go_to_tab",
+        "args": {"tab": 1},
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Go to Output tab
+    {
+        "keys": ["3"],
+        "command": "aider_savvy_go_to_tab",
+        "args": {"tab": 2},
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // ============================================================
+    // AIDER SAVVY - Panel Commands
+    // ============================================================
+
+    // Close all panels
+    {
+        "keys": ["q"],
+        "command": "aider_savvy_close",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Refresh panels
+    {
+        "keys": ["f5"],
+        "command": "aider_savvy_refresh",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // ============================================================
+    // AIDER SAVVY - Terminal Commands
+    // ============================================================
+
+    // Start/Focus terminal
+    {
+        "keys": ["t"],
+        "command": "aider_savvy_start_terminal",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Stop terminal
+    {
+        "keys": ["shift+t"],
+        "command": "aider_savvy_stop_terminal",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Send message to Aider
+    {
+        "keys": ["c"],
+        "command": "aider_savvy_send_message",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Send Aider command
+    {
+        "keys": ["/"],
+        "command": "aider_savvy_send_command",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // ============================================================
+    // AIDER SAVVY - File Commands
+    // ============================================================
+
+    // Add file
+    {
+        "keys": ["a"],
+        "command": "aider_savvy_add_file",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Add current file
+    {
+        "keys": ["shift+a"],
+        "command": "aider_savvy_add_current_file",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Drop file
+    {
+        "keys": ["d"],
+        "command": "aider_savvy_drop_file",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Add as read-only
+    {
+        "keys": ["r"],
+        "command": "aider_savvy_read_only_file",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Scan project files
+    {
+        "keys": ["s"],
+        "command": "aider_savvy_scan_files",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // ============================================================
+    // AIDER SAVVY - Session Commands
+    // ============================================================
+
+    // Change mode
+    {
+        "keys": ["m"],
+        "command": "aider_savvy_change_mode",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Change model
+    {
+        "keys": ["shift+m"],
+        "command": "aider_savvy_change_model",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Change root
+    {
+        "keys": ["shift+r"],
+        "command": "aider_savvy_change_root",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Edit .env
+    {
+        "keys": ["e"],
+        "command": "aider_savvy_open_env",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Open global config
+    {
+        "keys": ["g"],
+        "command": "aider_savvy_open_global_config",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // ============================================================
+    // AIDER SAVVY - Session Commands
+    // ============================================================
+
+    // Sync from existing session
+    {
+        "keys": ["shift+s"],
+        "command": "aider_savvy_sync_session",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // ============================================================
+    // AIDER SAVVY - Output Commands
+    // ============================================================
+
+    // Clear output
+    {
+        "keys": ["shift+c"],
+        "command": "aider_savvy_clear_output",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    },
+
+    // Refresh output from file
+    {
+        "keys": ["shift+o"],
+        "command": "aider_savvy_refresh_output",
+        "context": [
+            {"key": "aider_savvy_view", "operator": "equal", "operand": true}
+        ]
+    }
 ]
